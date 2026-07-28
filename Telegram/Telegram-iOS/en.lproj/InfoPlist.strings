@@ -1,0 +1,12 @@
+/* Localized versions of Info.plist keys */
+
+"NSContactsUsageDescription" = "Kislap can securely sync your contacts to Telegram's cloud so you can find people you already know.";
+"NSLocationWhenInUseUsageDescription" = "Kislap uses your location when you choose to share a place or live location, or opt in to find nearby study partners. Your exact position is not shown.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Kislap uses background location only while you choose to share a live location in a conversation.";
+"NSLocationAlwaysUsageDescription" = "Kislap uses background location only while you choose to share a live location in a conversation.";
+"NSCameraUsageDescription" = "Kislap uses the camera when you take and share photos or videos, scan codes, or join a video learning session.";
+"NSPhotoLibraryUsageDescription" = "Kislap accesses selected photos and videos so you can share them in conversations and lessons.";
+"NSPhotoLibraryAddUsageDescription" = "Kislap saves photos and videos only when you choose to download them.";
+"NSMicrophoneUsageDescription" = "Kislap uses the microphone for voice messages, recordings, and voice or video learning sessions.";
+"NSSiriUsageDescription" = "Use Siri to send messages with Kislap.";
+"NSFaceIDUsageDescription" = "Use Face ID to unlock Kislap and protect your conversations.";

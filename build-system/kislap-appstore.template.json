@@ -1,0 +1,14 @@
+{
+  "bundle_id": "ph.kislap.app",
+  "api_id": "REPLACE_WITH_TELEGRAM_API_ID",
+  "api_hash": "REPLACE_WITH_TELEGRAM_API_HASH",
+  "team_id": "REPLACE_WITH_APPLE_TEAM_ID",
+  "app_center_id": "0",
+  "is_internal_build": "false",
+  "is_appstore_build": "true",
+  "appstore_id": "REPLACE_WITH_APP_STORE_NUMERIC_ID",
+  "app_specific_url_scheme": "kislap",
+  "premium_iap_product_id": "",
+  "enable_siri": false,
+  "enable_icloud": false
+}

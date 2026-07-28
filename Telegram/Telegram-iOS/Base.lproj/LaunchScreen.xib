@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="ipad12_9" orientation="landscape" layout="fullscreen" appearance="dark"/>
+    <dependencies>
+        <deployment version="4096" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="O8c-13-3vw">
+            <rect key="frame" x="0.0" y="0.0" width="1366" height="1024"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Kislap" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nDT-Qm-L4P">
+                    <rect key="frame" x="622" y="472" width="122" height="48"/>
+                    <fontDescription key="fontDescription" type="system" weight="bold" pointSize="40"/>
+                    <color key="textColor" red="0.4862745098" green="0.3215686275" blue="0.9568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Learn · Teach · Connect" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D9J-j6-vrA">
+                    <rect key="frame" x="599" y="531" width="168" height="20"/>
+                    <fontDescription key="fontDescription" type="system" weight="medium" pointSize="15"/>
+                    <color key="textColor" red="0.4196078431" green="0.4392156863" blue="0.5176470588" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+            </subviews>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+            <constraints>
+                <constraint firstItem="nDT-Qm-L4P" firstAttribute="centerX" secondItem="O8c-13-3vw" secondAttribute="centerX" id="4wL-qf-7Me"/>
+                <constraint firstItem="nDT-Qm-L4P" firstAttribute="centerY" secondItem="O8c-13-3vw" secondAttribute="centerY" constant="-16" id="HPp-Xw-tMn"/>
+                <constraint firstItem="D9J-j6-vrA" firstAttribute="top" secondItem="nDT-Qm-L4P" secondAttribute="bottom" constant="10" id="OaN-aq-gbP"/>
+                <constraint firstItem="D9J-j6-vrA" firstAttribute="centerX" secondItem="O8c-13-3vw" secondAttribute="centerX" id="ciS-Cu-t24"/>
+            </constraints>
+            <point key="canvasLocation" x="139" y="117"/>
+        </view>
+    </objects>
+    <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>
