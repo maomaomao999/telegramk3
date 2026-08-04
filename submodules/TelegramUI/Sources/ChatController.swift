@@ -6429,6 +6429,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             self.inputActivityDisposable = (self.typingActivityPromise.get()
             |> deliverOnMainQueue).startStrict(next: { [weak self] value in
                 if let strongSelf = self, strongSelf.presentationInterfaceState.interfaceState.editMessage == nil && strongSelf.presentationInterfaceState.subject != .scheduledMessages && strongSelf.presentationInterfaceState.currentSendAsPeerId == nil {
+                    if KislapPrivacyPreferences.suppressesPeerActivityBroadcasts {
+                        strongSelf.context.account.updateLocalInputActivity(peerId: activitySpace, activity: .typingText, isPresent: false)
+                        return
+                    }
                     strongSelf.context.account.updateLocalInputActivity(peerId: activitySpace, activity: .typingText, isPresent: value)
                 }
             })
@@ -6443,6 +6447,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
             |> deliverOnMainQueue).startStrict(next: { [weak self] value in
                 if let strongSelf = self, strongSelf.presentationInterfaceState.interfaceState.editMessage == nil && strongSelf.presentationInterfaceState.subject != .scheduledMessages && strongSelf.presentationInterfaceState.currentSendAsPeerId == nil {
+                    if KislapPrivacyPreferences.suppressesPeerActivityBroadcasts {
+                        strongSelf.context.account.updateLocalInputActivity(peerId: activitySpace, activity: .choosingSticker, isPresent: false)
+                        return
+                    }
                     if value {
                         strongSelf.context.account.updateLocalInputActivity(peerId: activitySpace, activity: .typingText, isPresent: false)
                     }
@@ -6454,6 +6462,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             |> deliverOnMainQueue).startStrict(next: { [weak self] value in
                 if let strongSelf = self, strongSelf.presentationInterfaceState.interfaceState.editMessage == nil && strongSelf.presentationInterfaceState.subject != .scheduledMessages && strongSelf.presentationInterfaceState.currentSendAsPeerId == nil {
                     strongSelf.acquiredRecordingActivityDisposable?.dispose()
+                    if KislapPrivacyPreferences.suppressesPeerActivityBroadcasts {
+                        strongSelf.acquiredRecordingActivityDisposable = nil
+                        return
+                    }
                     switch value {
                         case .voice:
                             strongSelf.acquiredRecordingActivityDisposable = strongSelf.context.account.acquireLocalInputActivity(peerId: activitySpace, activity: .recordingVoice)

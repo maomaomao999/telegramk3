@@ -5,8 +5,10 @@ import Display
 import SwiftSignalKit
 import TelegramPresentationData
 import AccountContext
+import AVFoundation
+import Photos
 
-final class KislapProfileController: ViewController {
+final class KislapProfileController: ViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     private struct SkillControl {
         let slug: String
         let learnSwitch: UISwitch
@@ -27,6 +29,8 @@ final class KislapProfileController: ViewController {
     private let nameLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let verifiedLabel = UILabel()
+    private let photoButton = UIButton(type: .system)
+    private let photoHintLabel = UILabel()
     private let basicTitleLabel = UILabel()
     private let fieldsCard = UIView()
     private let displayNameField = UITextField()
@@ -158,6 +162,12 @@ final class KislapProfileController: ViewController {
         avatarContainer.addSubview(self.initialsLabel)
         avatarContainer.addSubview(self.avatarView)
 
+        self.photoButton.titleLabel?.font = UIFont.systemFont(ofSize: 14.0, weight: .semibold)
+        self.photoButton.contentHorizontalAlignment = .left
+        self.photoButton.addTarget(self, action: #selector(self.photoPressed), for: .touchUpInside)
+        self.photoHintLabel.font = UIFont.systemFont(ofSize: 12.0)
+        self.photoHintLabel.numberOfLines = 0
+
         self.nameLabel.font = UIFont.systemFont(ofSize: 20.0, weight: .bold)
         self.nameLabel.numberOfLines = 1
         self.subtitleLabel.font = UIFont.systemFont(ofSize: 14.0)
@@ -165,7 +175,7 @@ final class KislapProfileController: ViewController {
         self.verifiedLabel.font = UIFont.systemFont(ofSize: 13.0, weight: .semibold)
         self.verifiedLabel.numberOfLines = 1
 
-        let textStack = UIStackView(arrangedSubviews: [self.nameLabel, self.subtitleLabel, self.verifiedLabel])
+        let textStack = UIStackView(arrangedSubviews: [self.nameLabel, self.subtitleLabel, self.verifiedLabel, self.photoButton, self.photoHintLabel])
         textStack.axis = .vertical
         textStack.spacing = 3.0
         let row = UIStackView(arrangedSubviews: [avatarContainer, textStack, self.activityIndicator])
@@ -373,6 +383,8 @@ final class KislapProfileController: ViewController {
         self.title = strings.title
         self.subtitleLabel.text = strings.subtitle
         self.verifiedLabel.text = "✓ " + strings.verifiedAdult
+        self.photoButton.setTitle(strings.photoAction, for: .normal)
+        self.photoHintLabel.text = strings.photoHint
         self.basicTitleLabel.text = strings.basicInformation
         self.displayNameField.placeholder = strings.displayName
         self.goalField.placeholder = strings.learningGoal
@@ -405,6 +417,8 @@ final class KislapProfileController: ViewController {
         self.nameLabel.textColor = theme.list.itemPrimaryTextColor
         self.subtitleLabel.textColor = theme.list.itemSecondaryTextColor
         self.verifiedLabel.textColor = KislapBrandPalette.success
+        self.photoButton.setTitleColor(theme.list.itemAccentColor, for: .normal)
+        self.photoHintLabel.textColor = theme.list.itemSecondaryTextColor
         for title in [self.basicTitleLabel, self.skillsTitleLabel, self.privacyTitleLabel, self.accountTitleLabel] {
             title.textColor = theme.list.itemSecondaryTextColor
         }
@@ -573,13 +587,133 @@ final class KislapProfileController: ViewController {
     }
 
     private func setFormEnabled(_ enabled: Bool) {
-        for view in [self.displayNameField, self.goalField, self.bioView, self.languagesField, self.availabilityField, self.saveButton, self.disconnectButton, self.deleteButton] {
+        for view in [self.displayNameField, self.goalField, self.bioView, self.languagesField, self.availabilityField, self.photoButton, self.saveButton, self.disconnectButton, self.deleteButton] {
             view.isUserInteractionEnabled = enabled
             view.alpha = enabled ? 1.0 : 0.65
         }
         for control in self.skillControls {
             control.learnSwitch.isEnabled = enabled
             control.teachSwitch.isEnabled = enabled
+        }
+    }
+
+    @objc private func photoPressed() {
+        let alert = UIAlertController(title: self.strings.photoAction, message: self.strings.photoHint, preferredStyle: .actionSheet)
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            alert.addAction(UIAlertAction(title: self.strings.takePhoto, style: .default, handler: { [weak self] _ in
+                self?.openImagePicker(sourceType: .camera)
+            }))
+        }
+        alert.addAction(UIAlertAction(title: self.strings.choosePhoto, style: .default, handler: { [weak self] _ in
+            self?.openImagePicker(sourceType: .photoLibrary)
+        }))
+        alert.addAction(UIAlertAction(title: self.strings.cancel, style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.photoButton
+            popover.sourceRect = self.photoButton.bounds
+        }
+        self.present(alert, animated: true)
+    }
+
+    private func openImagePicker(sourceType: UIImagePickerController.SourceType) {
+        if sourceType == .camera {
+            let authorization = AVCaptureDevice.authorizationStatus(for: .video)
+            if authorization == .denied || authorization == .restricted {
+                self.presentPermissionRecovery(title: self.strings.cameraPermissionTitle)
+                return
+            }
+        } else {
+            let authorization: PHAuthorizationStatus
+            if #available(iOS 14.0, *) {
+                authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            } else {
+                authorization = PHPhotoLibrary.authorizationStatus()
+            }
+            if authorization == .denied || authorization == .restricted {
+                self.presentPermissionRecovery(title: self.strings.photoPermissionTitle)
+                return
+            }
+        }
+
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.sourceType = sourceType
+        picker.allowsEditing = true
+        picker.modalPresentationStyle = .fullScreen
+        self.present(picker, animated: true)
+    }
+
+    private func presentPermissionRecovery(title: String) {
+        let alert = UIAlertController(title: title, message: self.strings.permissionDetail, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: self.strings.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: self.strings.openSettings, style: .default, handler: { _ in
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(url)
+        }))
+        self.present(alert, animated: true)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+
+    func imagePickerController(
+        _ picker: UIImagePickerController,
+        didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+    ) {
+        guard let image = (info[.editedImage] ?? info[.originalImage]) as? UIImage,
+              let data = self.normalizedPhotoData(from: image) else {
+            picker.dismiss(animated: true)
+            self.showMessage(title: self.strings.photoUploadFailed, message: nil)
+            return
+        }
+
+        picker.dismiss(animated: true) { [weak self] in
+            self?.uploadProfilePhoto(data)
+        }
+    }
+
+    private func normalizedPhotoData(from image: UIImage) -> Data? {
+        let squareSide = min(image.size.width, image.size.height)
+        guard squareSide > 0.0 else { return nil }
+        let outputSide = min(CGFloat(1080.0), squareSide)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: outputSide, height: outputSide), format: format)
+        let normalized = renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0.0, y: 0.0, width: outputSide, height: outputSide))
+            let scale = max(outputSide / image.size.width, outputSide / image.size.height)
+            let drawSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            let drawRect = CGRect(
+                x: (outputSide - drawSize.width) * 0.5,
+                y: (outputSide - drawSize.height) * 0.5,
+                width: drawSize.width,
+                height: drawSize.height
+            )
+            image.draw(in: drawRect)
+        }
+        return normalized.jpegData(compressionQuality: 0.82)
+    }
+
+    private func uploadProfilePhoto(_ data: Data) {
+        self.photoButton.setTitle(self.strings.uploadingPhoto, for: .normal)
+        self.photoButton.isEnabled = false
+        self.activityIndicator.startAnimating()
+        self.apiClient.uploadProfilePhoto(data: data) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.photoButton.isEnabled = true
+                self.updateLocalizedStrings()
+                switch result {
+                case .success:
+                    self.loadProfile()
+                case let .failure(error):
+                    self.showError(title: self.strings.photoUploadFailed, error: error, retry: false)
+                }
+            }
         }
     }
 

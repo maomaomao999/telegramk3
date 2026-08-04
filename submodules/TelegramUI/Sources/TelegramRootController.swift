@@ -33,40 +33,95 @@ import ChatEmptyNode
 
 private class DetailsChatPlaceholderNode: ASDisplayNode, NavigationDetailsPlaceholderNode {
     private var presentationData: PresentationData
-    private var presentationInterfaceState: ChatPresentationInterfaceState
-    
+
     let wallpaperBackgroundNode: WallpaperBackgroundNode
-    let emptyNode: ChatEmptyNode
-    
+    private let cardNode = ASDisplayNode()
+    private let iconNode = ASImageNode()
+    private let titleNode = ASTextNode()
+    private let detailNode = ASTextNode()
+
     init(context: AccountContext) {
         self.presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        self.presentationInterfaceState = ChatPresentationInterfaceState(chatWallpaper: self.presentationData.chatWallpaper, theme: self.presentationData.theme, preferredGlassType: .default, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameDisplayOrder: self.presentationData.nameDisplayOrder, limitsConfiguration: context.currentLimitsConfiguration.with { $0 }, fontSize: self.presentationData.chatFontSize, bubbleCorners: self.presentationData.chatBubbleCorners, accountPeerId: context.account.peerId, mode: .standard(.default), chatLocation: .peer(id: context.account.peerId), subject: nil, greetingData: nil, pendingUnpinnedAllMessages: false, activeGroupCallInfo: nil, hasActiveGroupCall: false, threadData: nil, isGeneralThreadClosed: nil, replyMessage: nil, accountPeerColor: nil, businessIntro: nil)
-        
         self.wallpaperBackgroundNode = createWallpaperBackgroundNode(context: context, forChatDisplay: true, useSharedAnimationPhase: true)
-        self.emptyNode = ChatEmptyNode(context: context, interaction: nil)
-        
+
         super.init()
-        
+
+        self.cardNode.cornerRadius = 24.0
+        self.cardNode.clipsToBounds = true
+        self.iconNode.contentMode = .scaleAspectFit
+        self.titleNode.maximumNumberOfLines = 2
+        self.detailNode.maximumNumberOfLines = 4
+
         self.addSubnode(self.wallpaperBackgroundNode)
-        self.addSubnode(self.emptyNode)
+        self.addSubnode(self.cardNode)
+        self.cardNode.addSubnode(self.iconNode)
+        self.cardNode.addSubnode(self.titleNode)
+        self.cardNode.addSubnode(self.detailNode)
+        self.applyPresentationData()
     }
-    
+
     func updatePresentationData(_ presentationData: PresentationData) {
         self.presentationData = presentationData
-        let preferredGlassType = self.presentationInterfaceState.preferredGlassType
-        self.presentationInterfaceState = ChatPresentationInterfaceState(chatWallpaper: self.presentationData.chatWallpaper, theme: self.presentationData.theme, preferredGlassType: preferredGlassType, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameDisplayOrder: self.presentationData.nameDisplayOrder, limitsConfiguration: self.presentationInterfaceState.limitsConfiguration, fontSize: self.presentationData.chatFontSize, bubbleCorners: self.presentationData.chatBubbleCorners, accountPeerId: self.presentationInterfaceState.accountPeerId, mode: .standard(.default), chatLocation: self.presentationInterfaceState.chatLocation, subject: nil, greetingData: nil, pendingUnpinnedAllMessages: false, activeGroupCallInfo: nil, hasActiveGroupCall: false, threadData: nil, isGeneralThreadClosed: nil, replyMessage: nil, accountPeerColor: nil, businessIntro: nil)
-        
         self.wallpaperBackgroundNode.update(wallpaper: presentationData.chatWallpaper, animated: false)
+        self.applyPresentationData()
+        self.setNeedsLayout()
     }
-    
+
+    private func applyPresentationData() {
+        let theme = self.presentationData.theme
+        let strings = KislapNearbyStrings(languageCode: self.presentationData.strings.baseLanguageCode)
+
+        self.cardNode.backgroundColor = theme.list.itemBlocksBackgroundColor.withAlphaComponent(0.94)
+        self.iconNode.image = UIImage(systemName: "person.2.fill")?.withTintColor(theme.list.itemAccentColor, renderingMode: .alwaysOriginal)
+        self.titleNode.attributedText = NSAttributedString(
+            string: strings.detailsPlaceholderTitle,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 28.0, weight: .bold),
+                .foregroundColor: theme.list.itemPrimaryTextColor
+            ]
+        )
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.lineSpacing = 3.0
+        self.detailNode.attributedText = NSAttributedString(
+            string: strings.detailsPlaceholderDetail,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 17.0, weight: .regular),
+                .foregroundColor: theme.list.itemSecondaryTextColor,
+                .paragraphStyle: paragraph
+            ]
+        )
+    }
+
     func updateLayout(size: CGSize, needsTiling: Bool, transition: ContainedViewLayoutTransition) {
         let contentBounds = CGRect(origin: .zero, size: size)
         self.wallpaperBackgroundNode.updateLayout(size: size, displayMode: needsTiling ? .aspectFit : .aspectFill, transition: transition)
         transition.updateFrame(node: self.wallpaperBackgroundNode, frame: contentBounds)
-        
-        self.emptyNode.updateLayout(interfaceState: self.presentationInterfaceState, subject: .detailsPlaceholder, loadingNode: nil, backgroundNode: self.wallpaperBackgroundNode, size: contentBounds.size, insets: .zero, leftInset: 0.0, rightInset: 0.0, transition: transition)
-        transition.updateFrame(node: self.emptyNode, frame: CGRect(origin: .zero, size: size))
-        self.emptyNode.update(rect: contentBounds, within: contentBounds.size, transition: transition)
+
+        let cardWidth = min(460.0, max(300.0, size.width - 80.0))
+        let textWidth = cardWidth - 56.0
+        let titleSize = self.titleNode.measure(CGSize(width: textWidth, height: 100.0))
+        let detailSize = self.detailNode.measure(CGSize(width: textWidth, height: 130.0))
+        let cardHeight = 32.0 + 52.0 + 20.0 + titleSize.height + 12.0 + detailSize.height + 34.0
+        let cardFrame = CGRect(
+            x: floor((size.width - cardWidth) * 0.5),
+            y: floor((size.height - cardHeight) * 0.5),
+            width: cardWidth,
+            height: cardHeight
+        )
+        transition.updateFrame(node: self.cardNode, frame: cardFrame)
+        transition.updateFrame(
+            node: self.iconNode,
+            frame: CGRect(x: floor((cardWidth - 52.0) * 0.5), y: 32.0, width: 52.0, height: 52.0)
+        )
+        transition.updateFrame(
+            node: self.titleNode,
+            frame: CGRect(x: 28.0, y: 104.0, width: textWidth, height: titleSize.height)
+        )
+        transition.updateFrame(
+            node: self.detailNode,
+            frame: CGRect(x: 28.0, y: 104.0 + titleSize.height + 12.0, width: textWidth, height: detailSize.height)
+        )
     }
 }
 
@@ -77,6 +132,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     
     public var contactsController: ContactsController?
     public var callListController: CallListController?
+    private var kislapHomeController: KislapHomeController?
     private var kislapNearbyController: KislapNearbyController?
     public var chatListController: ChatListController?
     public var accountSettingsController: PeerInfoScreen?
@@ -214,14 +270,31 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         contactsController.switchToChatsController = {  [weak self] in
             self?.openChatsController(activateSearch: false)
         }
-        controllers.append(contactsController)
-        
+        let kislapNearbyController = KislapNearbyController(context: self.context)
+        let kislapHomeController = KislapHomeController(
+            context: self.context,
+            openMessages: { [weak self] in
+                self?.openChatsController(activateSearch: false)
+            },
+            openCalls: { [weak self] in
+                self?.openKislapCallsController()
+            },
+            openNearby: { [weak self] in
+                self?.openKislapNearbyController()
+            },
+            openPrivacy: { [weak self] in
+                self?.openKislapPrivacyCenter()
+            },
+            openBatchForward: { [weak self] in
+                self?.openChatsController(activateSearch: false)
+            }
+        )
+        controllers.append(kislapHomeController)
+        controllers.append(chatListController)
+        controllers.append(kislapNearbyController)
         if showCallsTab {
             controllers.append(callListController)
         }
-        let kislapNearbyController = KislapNearbyController(context: self.context)
-        controllers.append(kislapNearbyController)
-        controllers.append(chatListController)
         
         var restoreSettignsController: (ViewController & SettingsController)?
         if let sharedContext = self.context.sharedContext as? SharedAccountContextImpl {
@@ -242,10 +315,15 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         accountSettingsController.parentController = self
         controllers.append(accountSettingsController)
                 
-        tabBarController.setControllers(controllers, selectedIndex: restoreSettignsController != nil ? (controllers.count - 1) : (controllers.count - 2))
+        let defaultSelectedIndex = controllers.firstIndex(where: { $0 is KislapHomeController }) ?? 0
+        tabBarController.setControllers(
+            controllers,
+            selectedIndex: restoreSettignsController != nil ? (controllers.count - 1) : defaultSelectedIndex
+        )
         
         self.contactsController = contactsController
         self.callListController = callListController
+        self.kislapHomeController = kislapHomeController
         self.kislapNearbyController = kislapNearbyController
         self.chatListController = chatListController
         self.accountSettingsController = accountSettingsController
@@ -258,14 +336,16 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
             return
         }
         var controllers: [ViewController] = []
-        controllers.append(self.contactsController!)
-        if showCallsTab {
-            controllers.append(self.callListController!)
+        if let kislapHomeController = self.kislapHomeController {
+            controllers.append(kislapHomeController)
         }
+        controllers.append(self.chatListController!)
         if let kislapNearbyController = self.kislapNearbyController {
             controllers.append(kislapNearbyController)
         }
-        controllers.append(self.chatListController!)
+        if showCallsTab {
+            controllers.append(self.callListController!)
+        }
         controllers.append(self.accountSettingsController!)
         
         rootTabController.setControllers(controllers, selectedIndex: nil)
@@ -287,6 +367,28 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         if activateSearch {
             self.chatListController?.activateSearch(filter: filter, query: query)
         }
+    }
+
+    private func openKislapNearbyController() {
+        guard let rootTabController = self.rootTabController else {
+            return
+        }
+        if let index = rootTabController.controllers.firstIndex(where: { $0 is KislapNearbyController }) {
+            rootTabController.selectedIndex = index
+        }
+    }
+
+    private func openKislapCallsController() {
+        guard let rootTabController = self.rootTabController else {
+            return
+        }
+        if let index = rootTabController.controllers.firstIndex(where: { $0 is CallListController }) {
+            rootTabController.selectedIndex = index
+        }
+    }
+
+    private func openKislapPrivacyCenter() {
+        self.pushViewController(KislapPrivacyCenterController(context: self.context))
     }
     
     public func openRootCompose() {

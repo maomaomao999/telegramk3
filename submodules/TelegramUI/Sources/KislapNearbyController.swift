@@ -18,6 +18,11 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
     private let eyebrowLabel = UILabel()
     private let headlineLabel = UILabel()
     private let detailLabel = UILabel()
+    private let journeyTitleLabel = UILabel()
+    private let journeyStack = UIStackView()
+    private let learnJourneyButton = UIButton(type: .system)
+    private let teachJourneyButton = UIButton(type: .system)
+    private let connectJourneyButton = UIButton(type: .system)
     private let permissionCard = UIView()
     private let permissionTitleLabel = UILabel()
     private let permissionDetailLabel = UILabel()
@@ -125,6 +130,30 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         self.detailLabel.font = UIFont.systemFont(ofSize: 17.0)
         self.detailLabel.numberOfLines = 0
 
+        self.journeyTitleLabel.text = strings.journeyTitle
+        self.journeyTitleLabel.font = UIFont.systemFont(ofSize: 20.0, weight: .bold)
+        self.journeyTitleLabel.numberOfLines = 0
+
+        self.journeyStack.axis = .vertical
+        self.journeyStack.spacing = 10.0
+        let journeyButtons = [self.learnJourneyButton, self.teachJourneyButton, self.connectJourneyButton]
+        for button in journeyButtons {
+            button.contentHorizontalAlignment = .left
+            button.contentVerticalAlignment = .center
+            button.titleLabel?.numberOfLines = 0
+            button.layer.cornerRadius = 14.0
+            button.contentEdgeInsets = UIEdgeInsets(top: 13.0, left: 16.0, bottom: 13.0, right: 16.0)
+            button.imageEdgeInsets = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 0.0, right: 12.0)
+            button.titleEdgeInsets = UIEdgeInsets(top: 0.0, left: 12.0, bottom: 0.0, right: 0.0)
+            button.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 21.0, weight: .semibold), forImageIn: .normal)
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 76.0).isActive = true
+            self.journeyStack.addArrangedSubview(button)
+        }
+        self.learnJourneyButton.addTarget(self, action: #selector(self.learnJourneyPressed), for: .touchUpInside)
+        self.teachJourneyButton.addTarget(self, action: #selector(self.teachJourneyPressed), for: .touchUpInside)
+        self.connectJourneyButton.addTarget(self, action: #selector(self.connectJourneyPressed), for: .touchUpInside)
+        self.updateJourneyButtons()
+
         self.permissionCard.layer.cornerRadius = 14.0
         self.permissionCard.layer.borderWidth = UIScreenPixel
 
@@ -216,7 +245,10 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         self.contentStack.addArrangedSubview(self.eyebrowLabel)
         self.contentStack.addArrangedSubview(self.headlineLabel)
         self.contentStack.addArrangedSubview(self.detailLabel)
-        self.contentStack.setCustomSpacing(24.0, after: self.detailLabel)
+        self.contentStack.setCustomSpacing(22.0, after: self.detailLabel)
+        self.contentStack.addArrangedSubview(self.journeyTitleLabel)
+        self.contentStack.addArrangedSubview(self.journeyStack)
+        self.contentStack.setCustomSpacing(24.0, after: self.journeyStack)
         self.contentStack.addArrangedSubview(self.permissionCard)
         self.contentStack.setCustomSpacing(24.0, after: self.permissionCard)
         self.contentStack.addArrangedSubview(self.topicControl)
@@ -255,6 +287,8 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         self.eyebrowLabel.text = strings.learningEyebrow
         self.headlineLabel.text = strings.headline
         self.detailLabel.text = strings.detail
+        self.journeyTitleLabel.text = strings.journeyTitle
+        self.updateJourneyButtons()
         self.permissionDetailLabel.text = strings.locationPrivacyDetail
         self.accountButton.setTitle(self.apiClient.hasSession ? strings.learningProfileConnected : strings.connectLearningProfile, for: .normal)
         self.topicControl.setTitle(strings.topicEnglish, forSegmentAt: 0)
@@ -301,6 +335,8 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         self.eyebrowLabel.textColor = theme.list.itemAccentColor
         self.headlineLabel.textColor = theme.list.itemPrimaryTextColor
         self.detailLabel.textColor = theme.list.itemSecondaryTextColor
+        self.journeyTitleLabel.textColor = theme.list.itemPrimaryTextColor
+        self.updateJourneyButtons()
         self.permissionCard.backgroundColor = theme.list.itemBlocksBackgroundColor
         self.permissionCard.layer.borderColor = theme.list.itemBlocksSeparatorColor.cgColor
         self.permissionTitleLabel.textColor = theme.list.itemPrimaryTextColor
@@ -329,6 +365,77 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         if !self.currentPartners.isEmpty {
             self.renderPartners(self.currentPartners)
         }
+    }
+
+    private func updateJourneyButtons() {
+        let strings = self.strings
+        self.configureJourneyButton(
+            self.learnJourneyButton,
+            title: strings.learnActionTitle,
+            detail: strings.learnActionDetail,
+            iconName: "sparkles",
+            tintColor: KislapBrandPalette.brandPurple
+        )
+        self.configureJourneyButton(
+            self.teachJourneyButton,
+            title: strings.teachActionTitle,
+            detail: strings.teachActionDetail,
+            iconName: "person.crop.circle.badge.checkmark",
+            tintColor: KislapBrandPalette.success
+        )
+        self.configureJourneyButton(
+            self.connectJourneyButton,
+            title: strings.connectActionTitle,
+            detail: strings.connectActionDetail,
+            iconName: "bubble.left.and.bubble.right.fill",
+            tintColor: KislapBrandPalette.connection
+        )
+    }
+
+    private func configureJourneyButton(_ button: UIButton, title: String, detail: String, iconName: String, tintColor: UIColor) {
+        let theme = self.presentationData.theme
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = 2.0
+
+        let titleText = NSMutableAttributedString(
+            string: title + "\n",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 17.0, weight: .bold),
+                .foregroundColor: theme.list.itemPrimaryTextColor,
+                .paragraphStyle: paragraph
+            ]
+        )
+        titleText.append(NSAttributedString(
+            string: detail,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 13.0, weight: .regular),
+                .foregroundColor: theme.list.itemSecondaryTextColor,
+                .paragraphStyle: paragraph
+            ]
+        ))
+
+        button.setAttributedTitle(titleText, for: .normal)
+        button.setImage(UIImage(systemName: iconName), for: .normal)
+        button.tintColor = tintColor
+        button.backgroundColor = tintColor.withAlphaComponent(0.12)
+        button.accessibilityLabel = title + ". " + detail
+    }
+
+    @objc private func learnJourneyPressed() {
+        if !self.apiClient.hasSession {
+            self.promptForEmail()
+            return
+        }
+        let targetRect = self.topicControl.convert(self.topicControl.bounds, to: self.scrollView).insetBy(dx: 0.0, dy: -24.0)
+        self.scrollView.scrollRectToVisible(targetRect, animated: true)
+    }
+
+    @objc private func teachJourneyPressed() {
+        self.accountPressed()
+    }
+
+    @objc private func connectJourneyPressed() {
+        self.connectionsPressed()
     }
 
     private func makeSafetyRow(iconName: String, title: String, detail: String, tintColor: UIColor, showSeparator: Bool) -> UIView {
@@ -803,10 +910,20 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
             identityStack.axis = .vertical
             identityStack.spacing = 2.0
 
-            let headerStack = UIStackView(arrangedSubviews: [avatarContainer, identityStack])
+            let profile = UIButton(type: .system)
+            profile.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+            profile.tintColor = theme.list.itemSecondaryTextColor
+            profile.accessibilityLabel = self.strings.viewProfile
+            profile.tag = self.currentPartners.firstIndex(where: { $0.userId == partner.userId }) ?? 0
+            profile.addTarget(self, action: #selector(self.profilePressed(_:)), for: .touchUpInside)
+            profile.widthAnchor.constraint(equalToConstant: 34.0).isActive = true
+            profile.heightAnchor.constraint(equalToConstant: 44.0).isActive = true
+
+            let headerStack = UIStackView(arrangedSubviews: [avatarContainer, identityStack, profile])
             headerStack.axis = .horizontal
             headerStack.alignment = .center
             headerStack.spacing = 12.0
+            identityStack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
             let badges = UIStackView()
             badges.axis = .horizontal
@@ -924,9 +1041,34 @@ final class KislapNearbyController: ViewController, CLLocationManagerDelegate {
         }
     }
 
+    @objc private func profilePressed(_ sender: UIButton) {
+        guard self.currentPartners.indices.contains(sender.tag) else { return }
+        let partner = self.currentPartners[sender.tag]
+        let controller = KislapPartnerProfileController(
+            partner: partner,
+            selectedSkill: self.selectedSkill,
+            presentationData: self.presentationData
+        )
+        controller.onSafety = { [weak self] in
+            self?.presentSafetyActions(for: partner)
+        }
+        controller.modalPresentationStyle = .pageSheet
+        if #available(iOS 15.0, *), let sheet = controller.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.selectedDetentIdentifier = .large
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 22.0
+        }
+        self.present(controller, animated: true)
+    }
+
     @objc private func safetyPressed(_ sender: UIButton) {
         guard self.currentPartners.indices.contains(sender.tag) else { return }
         let partner = self.currentPartners[sender.tag]
+        self.presentSafetyActions(for: partner)
+    }
+
+    private func presentSafetyActions(for partner: KislapLearningPartner) {
         let alert = UIAlertController(title: partner.displayName, message: self.strings.safetyActionsMessage, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: self.presentationData.strings.Common_Cancel, style: .cancel))
         alert.addAction(UIAlertAction(title: self.strings.report, style: .default, handler: { [weak self] _ in

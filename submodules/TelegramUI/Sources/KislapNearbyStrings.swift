@@ -15,11 +15,21 @@ struct KislapNearbyStrings {
         return self.isChinese ? chinese : english
     }
 
-    var nearbyTitle: String { self.value("Nearby", "附近") }
+    var nearbyTitle: String { self.value("Learn", "学习") }
     var connections: String { self.value("Connect", "连接") }
     var learningEyebrow: String { self.value("KISLAP LEARNING", "KISLAP 学习") }
     var headline: String { self.value("Find a study partner nearby", "寻找附近的学习搭子") }
     var detail: String { self.value("Practice English, learn programming, music, singing and more with people who share your goals.", "和目标相同的人一起练英语、学编程、音乐、唱歌，以及更多技能。") }
+
+    var journeyTitle: String { self.value("Learn · Teach · Connect", "学习 · 教学 · 连接") }
+    var learnActionTitle: String { self.value("Learn", "学习") }
+    var learnActionDetail: String { self.value("Choose a skill and find a nearby practice partner.", "选择技能，寻找附近的练习搭子。") }
+    var teachActionTitle: String { self.value("Teach", "教学") }
+    var teachActionDetail: String { self.value("Show what you can teach and help someone improve.", "展示你能教的技能，帮助他人进步。") }
+    var connectActionTitle: String { self.value("Connect", "连接") }
+    var connectActionDetail: String { self.value("Manage requests, study partners and learning conversations.", "管理学习邀请、搭子和学习对话。") }
+    var detailsPlaceholderTitle: String { self.value("Learning starts with a person", "学习，从找到合适的人开始") }
+    var detailsPlaceholderDetail: String { self.value("Choose Learn to find a partner, Teach to share a skill, or Connect to plan your next session.", "通过“学习”寻找搭子，通过“教学”分享技能，或在“连接”中安排下一次学习。") }
 
     var topicEnglish: String { self.value("English", "英语") }
     var topicProgramming: String { self.value("Programming", "编程") }
@@ -115,7 +125,17 @@ struct KislapNearbyStrings {
     var noMatchingPartners: String { self.value("No matching learning partners are visible within 10 km right now.", "目前 10 公里范围内没有符合条件且处于可见状态的学习搭子。") }
     var activeNow: String { self.value("Active now", "当前在线") }
     var activeRecently: String { self.value("Active recently", "最近在线") }
+    var verifiedAdult: String { self.value("Verified adult profile", "已验证的成年资料") }
     var reviewDemoProfile: String { self.value("App Review demo profile", "App 审核演示资料") }
+    var viewProfile: String { self.value("View learning profile", "查看学习资料") }
+    var profileAbout: String { self.value("ABOUT", "关于") }
+    var wantsToLearn: String { self.value("WANTS TO LEARN", "想学习") }
+    var canTeach: String { self.value("CAN TEACH", "可以教") }
+    var learningInterests: String { self.value("LEARNING INTERESTS", "学习兴趣") }
+    var noProfileDetails: String { self.value("This learner has not added more details yet.", "这位学习者还没有补充更多资料。") }
+    var approximateAreaOnly: String { self.value("Approximate area only", "仅显示大致区域") }
+    var profileSafetyNote: String { self.value("Connect first. Keep early conversations in Kislap and use Safety whenever something feels wrong.", "请先建立连接。初次交流建议留在 Kislap 内；遇到异常情况可随时使用安全操作。") }
+    var close: String { self.value("Close", "关闭") }
     var requestStudySession: String { self.value("Request study session", "邀请一起学习") }
     var safety: String { self.value("Safety", "安全") }
     var requestSent: String { self.value("Request sent", "邀请已发送") }

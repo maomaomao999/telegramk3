@@ -14,6 +14,16 @@ struct KislapProfileStrings {
     var title: String { self.value("Learning Profile", "学习资料") }
     var subtitle: String { self.value("What nearby study partners can see", "附近学习搭子可以看到的内容") }
     var verifiedAdult: String { self.value("Verified adult learning profile", "已验证的成年学习资料") }
+    var photoAction: String { self.value("Add profile photo", "添加资料照片") }
+    var photoHint: String { self.value("Use a clear square photo. Location metadata is removed before upload.", "建议使用清晰的方形照片；上传前会移除位置元数据。") }
+    var takePhoto: String { self.value("Take Photo", "拍照") }
+    var choosePhoto: String { self.value("Choose from Library", "从照片图库选择") }
+    var uploadingPhoto: String { self.value("Uploading photo…", "正在上传照片…") }
+    var photoUploadFailed: String { self.value("Photo upload failed", "照片上传失败") }
+    var photoPermissionTitle: String { self.value("Photo access needed", "需要照片权限") }
+    var cameraPermissionTitle: String { self.value("Camera access needed", "需要相机权限") }
+    var permissionDetail: String { self.value("Open Settings to allow access, then try again.", "请前往“设置”允许访问，然后重试。") }
+    var openSettings: String { self.value("Open Settings", "打开设置") }
     var basicInformation: String { self.value("BASIC INFORMATION", "基本资料") }
     var displayName: String { self.value("Display name", "显示名称") }
     var learningGoal: String { self.value("Learning goal", "学习目标") }

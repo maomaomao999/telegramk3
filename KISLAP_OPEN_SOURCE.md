@@ -3,10 +3,10 @@
 ## Release identity
 
 - Product: Kislap: Learn & Connect
-- App version: 1.0
-- App Store build: 100002
+- App version: 1.2
+- App Store build: 100005
 - Bundle identifier: `ph.kislap.app`
-- Release tag: `ios-v1.0-build-100002`
+- Release tag: `ios-v1.2-build-100005`
 - Upstream base: Telegram iOS `release-12.8`
 - Upstream repository: https://github.com/TelegramMessenger/Telegram-iOS
 
@@ -14,7 +14,7 @@ This tag is the source tree used for the submitted binary, including Kislap
 changes and the exact Git references for each submodule. Clone with:
 
 ```sh
-git clone --recursive --branch ios-v1.0-build-100002 \
+git clone --recursive --branch ios-v1.2-build-100005 \
   https://github.com/maomaomao999/telegramk3.git kislap-ios
 ```
 

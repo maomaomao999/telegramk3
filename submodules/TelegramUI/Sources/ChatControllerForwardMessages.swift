@@ -130,7 +130,7 @@ extension ChatControllerImpl {
                         }
                     }
                                         
-                    let proceed = { [weak self, weak controller] in
+                    let executeForward = { [weak self, weak controller] in
                         guard let strongSelf = self, let strongController = controller else {
                             return
                         }
@@ -164,6 +164,16 @@ extension ChatControllerImpl {
                                 return
                             }
                             var result = result
+
+                            let destinationData = peers.map { peer in
+                                return (
+                                    id: peer.id,
+                                    name: peer.displayTitle(strings: strongSelf.presentationData.strings, displayOrder: strongSelf.presentationData.nameDisplayOrder)
+                                        .replacingOccurrences(of: "**", with: "")
+                                )
+                            }
+                            let progressController = KislapBatchForwardProgressController(context: strongSelf.context, destinations: destinationData)
+                            strongSelf.present(progressController, in: .window(.root))
                             
                             strongSelf.updateChatPresentationInterfaceState(animated: false, interactive: true, { $0.updatedInterfaceState({ $0.withoutSelectionState() }).updatedSearch(nil) })
                             
@@ -215,27 +225,12 @@ extension ChatControllerImpl {
                                     }
                                     
                                     let _ = (enqueueMessages(account: strongSelf.context.account, peerId: peer.id, messages: peerMessages)
-                                    |> deliverOnMainQueue).startStandalone(next: { messageIds in
-                                        if let strongSelf = self {
-                                            let signals: [Signal<Bool, NoError>] = messageIds.compactMap({ id -> Signal<Bool, NoError>? in
-                                                guard let id = id else {
-                                                    return nil
-                                                }
-                                                return strongSelf.context.account.pendingMessageManager.pendingMessageStatus(id)
-                                                |> mapToSignal { status, _ -> Signal<Bool, NoError> in
-                                                    if status != nil {
-                                                        return .never()
-                                                    } else {
-                                                        return .single(true)
-                                                    }
-                                                }
-                                                |> take(1)
-                                            })
-                                            if strongSelf.shareStatusDisposable == nil {
-                                                strongSelf.shareStatusDisposable = MetaDisposable()
-                                            }
-                                            strongSelf.shareStatusDisposable?.set((combineLatest(signals)
-                                            |> deliverOnMainQueue).startStrict())
+                                    |> deliverOnMainQueue).startStandalone(next: { [weak progressController] messageIds in
+                                        let validMessageIds = messageIds.compactMap { $0 }
+                                        if validMessageIds.isEmpty {
+                                            progressController?.markFailed(peerId: peer.id)
+                                        } else {
+                                            progressController?.markEnqueued(peerId: peer.id, messageIds: validMessageIds)
                                         }
                                     })
                                     
@@ -326,6 +321,32 @@ extension ChatControllerImpl {
                             let transformedMessages = strongSelf.transformEnqueueMessages(result, silentPosting: strongSelf.presentationInterfaceState.interfaceState.silentPosting, scheduleTime: scheduleWhenOnlineTimestamp)
                             commit(transformedMessages)
                         }
+                    }
+
+                    let proceed = { [weak self] in
+                        guard let strongSelf = self else {
+                            return
+                        }
+                        let destinationNames = peers.map { peer in
+                            return peer.displayTitle(strings: strongSelf.presentationData.strings, displayOrder: strongSelf.presentationData.nameDisplayOrder)
+                                .replacingOccurrences(of: "**", with: "")
+                        }
+                        weak var weakReviewController: KislapBatchForwardReviewController?
+                        let reviewController = KislapBatchForwardReviewController(
+                            context: strongSelf.context,
+                            messageCount: messages.count,
+                            destinationNames: destinationNames,
+                            includesComment: !messageText.string.isEmpty,
+                            hideNames: forwardOptions?.hideNames == true,
+                            hideCaptions: forwardOptions?.hideCaptions == true,
+                            confirm: {
+                                weakReviewController?.dismiss(animated: true, completion: {
+                                    executeForward()
+                                })
+                            }
+                        )
+                        weakReviewController = reviewController
+                        strongSelf.present(reviewController, in: .window(.root))
                     }
                     
                     if totalAmount.value > 0 {

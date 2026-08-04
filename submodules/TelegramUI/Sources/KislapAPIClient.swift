@@ -35,8 +35,10 @@ struct KislapLearningSkill: Decodable {
 }
 
 struct KislapLearningPhoto: Decodable {
+    let id: String?
     let url: String?
     let thumbUrl: String?
+    let order: Int?
     let isMain: Bool?
 }
 
@@ -153,6 +155,10 @@ final class KislapAPIClient {
 
     private struct ProfileResponse: Decodable {
         let profile: KislapProfile
+    }
+
+    private struct PhotoResponse: Decodable {
+        let photo: KislapLearningPhoto
     }
 
     private struct ConnectionMessagesResponse: Decodable {
@@ -307,6 +313,48 @@ final class KislapAPIClient {
             "teaching": teaching.map { ["slug": $0.slug, "level": $0.level] },
         ]
         self.authorizedRequest(path: "/api/v1/profile/skills", method: "PUT", body: body) { (result: Result<EmptyResponse, Error>) in
+            completion(result.map { _ in () })
+        }
+    }
+
+    func uploadProfilePhoto(
+        data: Data,
+        fileName: String = "learning-profile.jpg",
+        mimeType: String = "image/jpeg",
+        completion: @escaping (Result<KislapLearningPhoto, Error>) -> Void
+    ) {
+        self.withAccessToken { result in
+            switch result {
+            case let .success(token):
+                self.performPhotoUpload(data: data, fileName: fileName, mimeType: mimeType, accessToken: token) { result in
+                    if case let .failure(KislapAPIError.server(status, _)) = result, status == 401 {
+                        self.stateQueue.sync { self.accessToken = nil }
+                        self.withAccessToken { refreshResult in
+                            switch refreshResult {
+                            case let .success(refreshedToken):
+                                self.performPhotoUpload(data: data, fileName: fileName, mimeType: mimeType, accessToken: refreshedToken, completion: completion)
+                            case let .failure(error):
+                                completion(.failure(error))
+                            }
+                        }
+                    } else {
+                        completion(result)
+                    }
+                }
+            case let .failure(error):
+                completion(.failure(error))
+            }
+        }
+    }
+
+    func deleteProfilePhoto(id: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        self.authorizedRequest(path: "/api/v1/profile/photos/\(id)", method: "DELETE", body: nil) { (result: Result<EmptyResponse, Error>) in
+            completion(result.map { _ in () })
+        }
+    }
+
+    func setMainProfilePhoto(id: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        self.authorizedRequest(path: "/api/v1/profile/photos/\(id)/main", method: "PUT", body: nil) { (result: Result<EmptyResponse, Error>) in
             completion(result.map { _ in () })
         }
     }
@@ -466,6 +514,56 @@ final class KislapAPIClient {
                 completion(.failure(error))
             }
         }
+    }
+
+    private func performPhotoUpload(
+        data: Data,
+        fileName: String,
+        mimeType: String,
+        accessToken: String,
+        completion: @escaping (Result<KislapLearningPhoto, Error>) -> Void
+    ) {
+        guard let baseURL = self.baseURL, let url = URL(string: "/api/v1/profile/photos", relativeTo: baseURL) else {
+            completion(.failure(KislapAPIError.unavailable))
+            return
+        }
+
+        let boundary = "KislapBoundary-\(UUID().uuidString)"
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".utf8))
+        body.append(Data("Content-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(data)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45.0
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+
+        self.session.dataTask(with: request) { data, response, error in
+            if let error {
+                completion(.failure(error))
+                return
+            }
+            guard let http = response as? HTTPURLResponse, let data else {
+                completion(.failure(KislapAPIError.invalidResponse))
+                return
+            }
+            guard (200 ..< 300).contains(http.statusCode) else {
+                let envelope = try? JSONDecoder().decode(ErrorEnvelope.self, from: data)
+                completion(.failure(KislapAPIError.server(status: http.statusCode, code: envelope?.error ?? "upload_failed")))
+                return
+            }
+            do {
+                completion(.success(try JSONDecoder().decode(PhotoResponse.self, from: data).photo))
+            } catch {
+                completion(.failure(KislapAPIError.invalidResponse))
+            }
+        }.resume()
     }
 
     private func withAccessToken(completion: @escaping (Result<String, Error>) -> Void) {
